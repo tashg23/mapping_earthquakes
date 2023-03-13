@@ -2,35 +2,35 @@
 //let map = L.map('mapid').setView([30,30], 2);
 
 // We create the tile layer that will be the background of our map.
-let day = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/navigation-day-v1/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+let streets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
     maxZoom: 18,
     accessToken: API_KEY,
 });
 
 // We create the tile layer that will be the background of our map.
-let night = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+let satellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
     maxZoom: 18,
     accessToken: API_KEY,
 });
 
 let baseMaps = {
-  Day: day, 
-  Night: night
+  Street: streets, 
+  Satellite: satellite
 };
 
 // Create the map object with center, zoom level and default layer. -- alternative to setView method
 let map = L.map('mapid', {
-  center: [44.0, -80.0],
-  zoom: 2,
-  layers: [day]
+  center: [43.7, -79.3],
+  zoom: 11,
+  layers: [satellite]
 })
 
 // Pass our map layers into our layers control and add the layers control to the map 
 L.control.layers(baseMaps).addTo(map);
 
-let torontoData = "https://raw.githubusercontent.com/tashg23/mapping_earthquakes/Mapping_GeoJSON_Linestrings/Mapping_GeoJSON_Linestrings/torontoRoutes.json"
+let torontoHoods = "https://raw.githubusercontent.com/tashg23/mapping_earthquakes/Mapping_GeoJSON_Polygons/Mapping_GeoJSON_Polygons/torontoNeighborhoods.json"
 
 // Create a style for the lines 
 let myStyle = {
@@ -39,13 +39,15 @@ let myStyle = {
 };
 
 // Grabbing our GeoJSON data 
-d3.json(torontoData).then(function(data) {
+d3.json(torontoHoods).then(function(data) {
   console.log(data);
   // Creating a GeoJSON layer with the retrieved data 
   L.geoJSON(data, {
-    style: myStyle, 
+    fillColor: "yellow", 
+    color: "blue", 
+    weight: 1, 
     onEachFeature: function (feature, layer) {
-      layer.bindPopup ("<h3> Airline: " + feature.properties.airline + "</h3> <hr><h3> Destination: " + feature.properties.dst + "</h3>")
+      layer.bindPopup("<h2> Neighbourhood: " + feature.properties.AREA_NAME + "</h2>")
     }
   })
   .addTo(map)
