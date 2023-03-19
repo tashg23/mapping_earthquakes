@@ -1,5 +1,5 @@
 // Add console.log to check to see if our code is working.
-console.log("working");
+//console.log("working");
 
 // We create the tile layer that will be the background of our map.
 let streets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -15,6 +15,13 @@ let satelliteStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/sate
 	accessToken: API_KEY
 });
 
+//Creating third background layer 
+let dark = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    accessToken: API_KEY,
+});
+
 // Create the map object with center, zoom level and default layer.
 let map = L.map('mapid', {
 	center: [40.7, -94.5],
@@ -25,18 +32,22 @@ let map = L.map('mapid', {
 // Create a base layer that holds all three maps.
 let baseMaps = {
   "Streets": streets,
-  "Satellite": satelliteStreets
+  "Satellite": satelliteStreets, 
+  "Dark": dark
 };
 
-// 1. Add a 2nd layer group for the tectonic plate data.
+// 1. Add overlays
 let allEarthquakes = new L.LayerGroup();
 
 let tectonicPlates = new L.LayerGroup(); 
 
-// 2. Add a reference to the tectonic plates group to the overlays object.
+let majorEarthquakes = new L.LayerGroup(); 
+
+// 2. Add a references to the overlays object.
 let overlays = {
   "Earthquakes": allEarthquakes, 
-  "Tectonic Plates": tectonicPlates
+  "Tectonic Plates": tectonicPlates, 
+  "Major Earthquakes": majorEarthquakes
 };
 
 // Then we add a control to the map that will allow the user to change which
@@ -94,7 +105,7 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
   L.geoJson(data, {
     	// We turn each feature into a circleMarker on the map.
     	pointToLayer: function(feature, latlng) {
-      		console.log(data);
+      		//console.log(data);
       		return L.circleMarker(latlng);
         },
       // We set the style for each circleMarker using our styleInfo function.
@@ -108,6 +119,57 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
 
   // Then we add the earthquake layer to our map.
   allEarthquakes.addTo(map);
+
+//Retrieve major earth data from last 7 days  
+d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson").then(function(data) {
+  
+//Use same style as earthquake data 
+function styleInfo(feature) {
+  return {
+    opacity: 1,
+    fillOpacity: 1,
+    fillColor: getColor(feature.properties.mag),
+    color: "#000000",
+    radius: getRadius(feature.properties.mag),
+    stroke: true,
+    weight: 0.5
+  };
+}
+
+//Change color function to use 3 colours for major earthquake data 
+function getColor(magnitude) {
+  if (magnitude > 6) {
+    return "red";
+  }
+  if (magnitude > 5) {
+    return "orange";
+  }
+  if (magnitude <= 5) {
+    return "yellow";
+  }
+}
+
+function getRadius(magnitude) {
+  if (magnitude === 0) {
+    return 1;
+  }
+  return magnitude * 4;
+}
+
+L.geoJson(data, {
+  pointToLayer: function(feature, latlng) {
+    return L.circleMarker(latlng);
+  }, 
+style: styleInfo, 
+onEachFeature: function (feature, layer) {
+  layer.bindPopup("Magnitude: " + feature.properties.mag + "<br>Location: " + feature.properties.place);
+}
+})
+//Add major earthquakes layer to map 
+  .addTo(majorEarthquakes);
+
+majorEarthquakes.addTo(map);
+})
 
   // Here we create a legend control object.
 let legend = L.control({
